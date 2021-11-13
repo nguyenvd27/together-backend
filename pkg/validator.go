@@ -1,6 +1,10 @@
 package pkg
 
-import "strings"
+import (
+	"math/rand"
+	"strconv"
+	"strings"
+)
 
 func BearerAuthHeader(authHeader string) string {
 	if authHeader == "" {
@@ -18,4 +22,8 @@ func BearerAuthHeader(authHeader string) string {
 	}
 
 	return token
+}
+
+func RandomID() string {
+	return strconv.Itoa(rand.Int())
 }
