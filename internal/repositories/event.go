@@ -10,6 +10,8 @@ import (
 
 type EventRepo interface {
 	CreateEvent(title, content string, imageUrl []string, createdBy uint64, startTime, endTime time.Time, location int, detailLocation string) (*models.Event, error)
+	GetEvents(page, size int) ([]models.Event, error)
+	CountEvents() (int64, error)
 }
 
 type eventDB struct {
@@ -47,4 +49,28 @@ func (eventDB *eventDB) CreateEvent(title, content string, imageUrl []string, cr
 		return nil, fmt.Errorf("failed to create event")
 	}
 	return &event, nil
+}
+
+func (eventDB *eventDB) GetEvents(page, size int) ([]models.Event, error) {
+	var events []models.Event
+	err := eventDB.db.Preload("Users").Preload("EventImages").
+		Limit(size).Offset((page - 1) * size).
+		Order("created_at desc").
+		Find(&events).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to find events")
+	}
+
+	return events, nil
+}
+
+func (eventDB *eventDB) CountEvents() (int64, error) {
+	var total int64
+
+	err := eventDB.db.Table("events").Count(&total).Error
+	if err != nil {
+		return int64(0), fmt.Errorf("failed to count events")
+	}
+
+	return total, nil
 }
