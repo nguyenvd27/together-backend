@@ -17,5 +17,7 @@ func New() *mux.Router {
 	router.HandleFunc("/api/v1/register", handlers.Register).Methods("POST")
 	router.HandleFunc("/api/v1/logout", middleware.Auth(handlers.Logout)).Methods("POST")
 
+	router.HandleFunc("/api/v1/events", middleware.Auth(handlers.CreateEvent)).Methods("POST")
+
 	return router
 }
