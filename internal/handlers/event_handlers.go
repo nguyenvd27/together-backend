@@ -13,6 +13,8 @@ import (
 
 var eventUsecase usecases.EventUseCase
 
+const SIZE_PER_PAGE int = 8
+
 func parseRequestBodyFromMultipartFrom(multipartFrom *multipart.Form) (*usecases.ReqBodyEvent, error) {
 	var (
 		reqBody usecases.ReqBodyEvent
@@ -86,8 +88,45 @@ func CreateEvent(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func GetEvents(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var (
+		err  error
+		page int = 1
+	)
+	queries := r.URL.Query()
+	if len(queries["page"]) > 0 {
+		page, err = strconv.Atoi(queries["page"][0])
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{
+				"message": "failed to parse query page",
+			})
+			return
+		}
+	}
+
+	events, total, err := eventUsecase.GetEventsUsecase(page, SIZE_PER_PAGE)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "get events successfully",
+		"events":  events,
+		"total":   total,
+		"page":    page,
+	})
+}
+
 func init() {
 	db = database.ConnectDB()
 	eventRepo := repositories.NewEventRepo(db)
-	eventUsecase = usecases.NewEventUsecase(eventRepo)
+	userRepo := repositories.NewUserRepo(db)
+	eventUsecase = usecases.NewEventUsecase(eventRepo, userRepo)
 }

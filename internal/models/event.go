@@ -19,4 +19,5 @@ type Event struct {
 	UpdatedAt      time.Time      `json:"updated_at"`
 	DeletedAt      gorm.DeletedAt `gorm:"index" json:"-"`
 	EventImages    []EventImage   `json:"event_images" gorm:"foreignKey:EventId"`
+	Users          []User         `json:"users" gorm:"many2many:user_events;"`
 }

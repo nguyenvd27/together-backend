@@ -9,10 +9,13 @@ import (
 
 type EventUseCase interface {
 	CreateEventUsecase(reqBody *ReqBodyEvent, imageUrl []string) (*models.Event, error)
+
+	GetEventsUsecase(page, size int) ([]EventsCreatedByUser, int64, error)
 }
 
 type eventUsecase struct {
 	eventRepo repositories.EventRepo
+	userRepo  repositories.UserRepo
 }
 
 type ReqBodyEvent struct {
@@ -25,9 +28,15 @@ type ReqBodyEvent struct {
 	DetailLocation string
 }
 
-func NewEventUsecase(eventRepo repositories.EventRepo) EventUseCase {
+type EventsCreatedByUser struct {
+	EventDetail   models.Event `json:"event_detail"`
+	CreatedByUser models.User  `json:"created_by_user"`
+}
+
+func NewEventUsecase(eventRepo repositories.EventRepo, userRepo repositories.UserRepo) EventUseCase {
 	return &eventUsecase{
 		eventRepo: eventRepo,
+		userRepo:  userRepo,
 	}
 }
 
@@ -46,4 +55,32 @@ func (uc *eventUsecase) CreateEventUsecase(reqBody *ReqBodyEvent, imageUrl []str
 		return nil, err
 	}
 	return newEvent, nil
+}
+
+func (uc *eventUsecase) GetEventsUsecase(page, size int) ([]EventsCreatedByUser, int64, error) {
+	var eventsCreatedByUsers []EventsCreatedByUser
+
+	total, err := uc.eventRepo.CountEvents()
+	if err != nil {
+		return nil, int64(0), err
+	}
+
+	events, err := uc.eventRepo.GetEvents(page, size)
+	if err != nil {
+		return nil, int64(0), err
+	}
+
+	for i := 0; i < len(events); i++ {
+		createdByUser, err := uc.userRepo.GetUserById(int64(events[i].CreatedBy))
+		if err != nil {
+			return nil, int64(0), fmt.Errorf("failed to get user who created the event")
+		}
+		eventsCreatedByUser := EventsCreatedByUser{
+			EventDetail:   events[i],
+			CreatedByUser: createdByUser,
+		}
+		eventsCreatedByUsers = append(eventsCreatedByUsers, eventsCreatedByUser)
+	}
+
+	return eventsCreatedByUsers, total, nil
 }

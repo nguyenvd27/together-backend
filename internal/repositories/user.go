@@ -9,6 +9,7 @@ import (
 type UserRepo interface {
 	GetUserByEmail(email string) (models.User, error)
 	CreateUser(name, email string, password []byte) (models.User, error)
+	GetUserById(id int64) (models.User, error)
 }
 
 type userDB struct {
@@ -36,6 +37,13 @@ func (userDB *userDB) CreateUser(name, email string, password []byte) (models.Us
 	}
 
 	err := userDB.db.Create(&user).Error
+
+	return user, err
+}
+
+func (userDB *userDB) GetUserById(id int64) (models.User, error) {
+	var user models.User
+	err := userDB.db.First(&user, id).Error
 
 	return user, err
 }
