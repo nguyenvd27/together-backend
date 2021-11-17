@@ -9,6 +9,8 @@ import (
 	"together-backend/internal/database"
 	"together-backend/internal/repositories"
 	"together-backend/internal/usecases"
+
+	"github.com/gorilla/mux"
 )
 
 var eventUsecase usecases.EventUseCase
@@ -121,6 +123,35 @@ func GetEvents(w http.ResponseWriter, r *http.Request) {
 		"events":  events,
 		"total":   total,
 		"page":    page,
+	})
+}
+
+func GetEventDetail(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	params := mux.Vars(r)
+	eventId, err := strconv.Atoi(params["event_id"])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": "failed to parse params",
+		})
+		return
+	}
+
+	event, err := eventUsecase.GetEventDetailUsecase(eventId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "get events successfully",
+		"event":   event,
 	})
 }
 

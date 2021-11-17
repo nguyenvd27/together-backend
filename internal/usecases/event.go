@@ -9,8 +9,8 @@ import (
 
 type EventUseCase interface {
 	CreateEventUsecase(reqBody *ReqBodyEvent, imageUrl []string) (*models.Event, error)
-
 	GetEventsUsecase(page, size int) ([]EventsCreatedByUser, int64, error)
+	GetEventDetailUsecase(eventId int) (*EventsCreatedByUser, error)
 }
 
 type eventUsecase struct {
@@ -83,4 +83,26 @@ func (uc *eventUsecase) GetEventsUsecase(page, size int) ([]EventsCreatedByUser,
 	}
 
 	return eventsCreatedByUsers, total, nil
+}
+
+func (uc *eventUsecase) GetEventDetailUsecase(eventId int) (*EventsCreatedByUser, error) {
+	if eventId <= 0 {
+		return nil, fmt.Errorf("invalid event id")
+	}
+
+	event, err := uc.eventRepo.GetEventDetail(eventId)
+	if err != nil {
+		return nil, err
+	}
+
+	createdByUser, err := uc.userRepo.GetUserById(int64(event.CreatedBy))
+	if err != nil {
+		return nil, err
+	}
+
+	eventsCreatedByUser := EventsCreatedByUser{
+		EventDetail:   event,
+		CreatedByUser: createdByUser,
+	}
+	return &eventsCreatedByUser, nil
 }
