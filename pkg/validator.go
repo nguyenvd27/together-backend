@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"math/rand"
-	"strconv"
 	"strings"
 )
 
@@ -24,6 +23,12 @@ func BearerAuthHeader(authHeader string) string {
 	return token
 }
 
-func RandomID() string {
-	return strconv.Itoa(rand.Int())
+func RandomID(n int) string {
+	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
 }

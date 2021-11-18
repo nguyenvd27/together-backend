@@ -29,7 +29,11 @@ func EventImageUpload(files []*multipart.FileHeader) ([]string, error) {
 	var ctx = context.Background()
 	var imagesSlice []string
 
+	if len(files) > 5 {
+		return nil, fmt.Errorf("the number of files uploaded is too much. Upload up to 5 files")
+	}
 	for i, _ := range files {
+		fileName := files[i].Filename
 		file, err := files[i].Open()
 		if err != nil {
 			return nil, fmt.Errorf("failed to open file")
@@ -40,8 +44,7 @@ func EventImageUpload(files []*multipart.FileHeader) ([]string, error) {
 			ctx,
 			file,
 			uploader.UploadParams{
-				PublicID: "events/" + pkg.RandomID(),
-				// PublicID: pkg.RandomID(),
+				PublicID: "events/" + fileName + "_" + pkg.RandomID(6),
 			})
 		if err != nil {
 			return nil, fmt.Errorf("failed to upload file")

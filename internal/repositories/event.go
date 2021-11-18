@@ -12,6 +12,7 @@ type EventRepo interface {
 	CreateEvent(title, content string, imageUrl []string, createdBy uint64, startTime, endTime time.Time, location int, detailLocation string) (*models.Event, error)
 	GetEvents(page, size int) ([]models.Event, error)
 	CountEvents() (int64, error)
+	GetEventDetail(eventId int) (models.Event, error)
 }
 
 type eventDB struct {
@@ -73,4 +74,15 @@ func (eventDB *eventDB) CountEvents() (int64, error) {
 	}
 
 	return total, nil
+}
+
+func (eventDB *eventDB) GetEventDetail(eventId int) (models.Event, error) {
+	var event models.Event
+	err := eventDB.db.Preload("Users").Preload("EventImages").
+		First(&event, eventId).Error
+	if err != nil {
+		return models.Event{}, err
+	}
+
+	return event, nil
 }
