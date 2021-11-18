@@ -155,6 +155,36 @@ func GetEventDetail(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func DeleteEvent(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	params := mux.Vars(r)
+	eventId, err := strconv.Atoi(params["event_id"])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": "failed to parse event id",
+		})
+		return
+	}
+
+	userId := r.Context().Value("currentUserID").(int)
+
+	mess, err := eventUsecase.DeleteEventUsecase(eventId, userId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": mess,
+	})
+}
+
 func init() {
 	db = database.ConnectDB()
 	eventRepo := repositories.NewEventRepo(db)

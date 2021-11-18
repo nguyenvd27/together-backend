@@ -13,6 +13,8 @@ type EventRepo interface {
 	GetEvents(page, size int) ([]models.Event, error)
 	CountEvents() (int64, error)
 	GetEventDetail(eventId int) (models.Event, error)
+	GetEventByEventIdAndCreatedBy(eventId, createdBy int) (models.Event, error)
+	DeleteEvent(event models.Event) (string, error)
 }
 
 type eventDB struct {
@@ -85,4 +87,24 @@ func (eventDB *eventDB) GetEventDetail(eventId int) (models.Event, error) {
 	}
 
 	return event, nil
+}
+
+func (eventDB *eventDB) GetEventByEventIdAndCreatedBy(eventId, createdBy int) (models.Event, error) {
+	var event models.Event
+	err := eventDB.db.Preload("Users").Preload("EventImages").
+		First(&event, "id = ? AND created_by = ?", eventId, createdBy).Error
+	if err != nil {
+		return models.Event{}, err
+	}
+
+	return event, nil
+}
+
+func (eventDB *eventDB) DeleteEvent(event models.Event) (string, error) {
+	err := eventDB.db.Delete(&event).Error
+	if err != nil {
+		return "", err
+	}
+
+	return "deleted successfully", nil
 }

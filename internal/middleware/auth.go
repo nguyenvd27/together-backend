@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -10,12 +11,15 @@ import (
 )
 
 type Claims struct {
-	Email string `json:"email"`
+	UserId int    `json:"user_id"`
+	Email  string `json:"email"`
 	jwt.StandardClaims
 }
 
 func Auth(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
 		if r.Header["Authorization"] == nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(map[string]interface{}{
@@ -35,7 +39,8 @@ func Auth(handler http.HandlerFunc) http.HandlerFunc {
 		}
 
 		var jwtKey = []byte(os.Getenv("SECRET_KEY"))
-		tokenParse, err := jwt.ParseWithClaims(token, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		var claims = &Claims{}
+		tokenParse, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
 			return jwtKey, nil
 		})
 
@@ -55,6 +60,7 @@ func Auth(handler http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		handler.ServeHTTP(w, r)
+		ctx := context.WithValue(r.Context(), "currentUserID", claims.UserId)
+		handler.ServeHTTP(w, r.WithContext(ctx))
 	}
 }

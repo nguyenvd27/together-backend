@@ -11,6 +11,7 @@ type EventUseCase interface {
 	CreateEventUsecase(reqBody *ReqBodyEvent, imageUrl []string) (*models.Event, error)
 	GetEventsUsecase(page, size int) ([]EventsCreatedByUser, int64, error)
 	GetEventDetailUsecase(eventId int) (*EventsCreatedByUser, error)
+	DeleteEventUsecase(eventId, userId int) (string, error)
 }
 
 type eventUsecase struct {
@@ -105,4 +106,27 @@ func (uc *eventUsecase) GetEventDetailUsecase(eventId int) (*EventsCreatedByUser
 		CreatedByUser: createdByUser,
 	}
 	return &eventsCreatedByUser, nil
+}
+
+func (uc *eventUsecase) DeleteEventUsecase(eventId, userId int) (string, error) {
+	if eventId <= 0 {
+		return "", fmt.Errorf("invalid event id")
+	}
+	if userId <= 0 {
+		return "", fmt.Errorf("invalid user id")
+	}
+
+	event, err := uc.eventRepo.GetEventByEventIdAndCreatedBy(eventId, userId)
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Println("event will delete: ", event)
+
+	mess, err := uc.eventRepo.DeleteEvent(event)
+	if err != nil {
+		return "", err
+	}
+
+	return mess, nil
 }
