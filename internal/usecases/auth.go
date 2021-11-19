@@ -26,7 +26,8 @@ type AuthResponse struct {
 }
 
 type Claims struct {
-	Email string `json:"email"`
+	UserId int    `json:"user_id"`
+	Email  string `json:"email"`
 	jwt.StandardClaims
 }
 
@@ -48,7 +49,8 @@ func (uc *accountUsecase) Login(email, password string) (*AuthResponse, error) {
 
 	// Generate token
 	claims := &Claims{
-		Email: email,
+		UserId: int(user.Id),
+		Email:  email,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour).Unix(),
 		},
@@ -87,7 +89,8 @@ func (uc *accountUsecase) Register(name, email, password string) (*AuthResponse,
 
 	// Generate token
 	claims := &Claims{
-		Email: email,
+		UserId: int(user.Id),
+		Email:  email,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour).Unix(),
 		},
