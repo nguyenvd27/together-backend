@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"fmt"
 	"time"
 	"together-backend/internal/models"
 
@@ -15,6 +14,7 @@ type EventRepo interface {
 	GetEventDetail(eventId int) (models.Event, error)
 	GetEventByEventIdAndCreatedBy(eventId, createdBy int) (models.Event, error)
 	DeleteEvent(event models.Event) (string, error)
+	UpdateEvent(event models.Event, title, content string, imageUrl []string, startTime, endTime time.Time, location int, detailLocation string) (*models.Event, error)
 }
 
 type eventDB struct {
@@ -49,7 +49,7 @@ func (eventDB *eventDB) CreateEvent(title, content string, imageUrl []string, cr
 		EventImages:    imageUrls(imageUrl),
 	}
 	if err := eventDB.db.Create(&event).Error; err != nil {
-		return nil, fmt.Errorf("failed to create event")
+		return nil, err
 	}
 	return &event, nil
 }
@@ -61,18 +61,20 @@ func (eventDB *eventDB) GetEvents(page, size int) ([]models.Event, error) {
 		Order("created_at desc").
 		Find(&events).Error
 	if err != nil {
-		return nil, fmt.Errorf("failed to find events")
+		return nil, err
 	}
 
 	return events, nil
 }
 
 func (eventDB *eventDB) CountEvents() (int64, error) {
-	var total int64
-
-	err := eventDB.db.Table("events").Count(&total).Error
+	var (
+		total  int64
+		events models.Event
+	)
+	err := eventDB.db.Find(&events).Count(&total).Error
 	if err != nil {
-		return int64(0), fmt.Errorf("failed to count events")
+		return int64(0), err
 	}
 
 	return total, nil
@@ -107,4 +109,27 @@ func (eventDB *eventDB) DeleteEvent(event models.Event) (string, error) {
 	}
 
 	return "deleted successfully", nil
+}
+
+func (eventDB *eventDB) UpdateEvent(event models.Event, title, content string, imageUrl []string, startTime, endTime time.Time, location int, detailLocation string) (*models.Event, error) {
+	editEvent := models.Event{
+		Id:             event.Id,
+		Title:          title,
+		Content:        content,
+		StartTime:      startTime,
+		EndTime:        endTime,
+		Location:       location,
+		DetailLocation: detailLocation,
+		EventImages:    imageUrls(imageUrl),
+	}
+
+	err := eventDB.db.Model(&event.EventImages).Delete(event.EventImages).Error
+	if err != nil {
+		return nil, err
+	}
+	if err := eventDB.db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&editEvent).Error; err != nil {
+		return nil, err
+	}
+
+	return &event, nil
 }

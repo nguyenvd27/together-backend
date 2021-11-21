@@ -14,7 +14,7 @@ func initRouter() {
 	router := router.New()
 
 	corsWrapper := cors.New(cors.Options{
-		AllowedMethods: []string{"GET", "POST", "DELETE"},
+		AllowedMethods: []string{"GET", "POST", "DELETE", "PUT"},
 		AllowedHeaders: []string{"Content-Type", "Authorization", "Origin", "Accept", "*"},
 	})
 

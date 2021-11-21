@@ -89,7 +89,7 @@ func (uc *accountUsecase) Register(name, email, password string) (*AuthResponse,
 
 	// Generate token
 	claims := &Claims{
-		UserId: int(user.Id),
+		UserId: int(newUser.Id),
 		Email:  email,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour).Unix(),

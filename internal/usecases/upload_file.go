@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"mime/multipart"
+	"together-backend/internal/repositories"
 	"together-backend/pkg"
 
 	"github.com/cloudinary/cloudinary-go"
@@ -12,9 +13,21 @@ import (
 
 const MAX_UPLOAD_SIZE = 10485760 // 10Mb
 
-type ERROR_CODE int
+type UploadUseCase interface {
+	EventImageUpload(files []*multipart.FileHeader) ([]string, error)
+}
 
-func EventImageUpload(files []*multipart.FileHeader) ([]string, error) {
+type uploadUsecase struct {
+	imageRepo repositories.ImageRepo
+}
+
+func NewUploadUsecase(imageRepo repositories.ImageRepo) UploadUseCase {
+	return &uploadUsecase{
+		imageRepo: imageRepo,
+	}
+}
+
+func (uc *uploadUsecase) EventImageUpload(files []*multipart.FileHeader) ([]string, error) {
 	for _, fileHeader := range files {
 		if fileHeader.Size > MAX_UPLOAD_SIZE {
 			return nil, fmt.Errorf("the uploaded file is too big. Please choose an file that's less than 1MB in size")
@@ -34,6 +47,17 @@ func EventImageUpload(files []*multipart.FileHeader) ([]string, error) {
 	}
 	for i, _ := range files {
 		fileName := files[i].Filename
+		// fmt.Println("fileName: ", files[i])
+		// image, err := uc.imageRepo.GetImageByUrl(fileName)
+		// if err != nil && err.Error() != "record not found" {
+		// 	return nil, err
+		// }
+		// fmt.Println("file: ", image)
+		// if image.Id != 0 {
+		// 	imagesSlice = append(imagesSlice, image.ImageUrl)
+		// 	continue
+		// }
+
 		file, err := files[i].Open()
 		if err != nil {
 			return nil, fmt.Errorf("failed to open file")
