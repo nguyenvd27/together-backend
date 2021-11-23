@@ -52,7 +52,7 @@ func (uc *accountUsecase) Login(email, password string) (*AuthResponse, error) {
 		UserId: int(user.Id),
 		Email:  email,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour).Unix(),
+			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
 		},
 	}
 
@@ -92,7 +92,7 @@ func (uc *accountUsecase) Register(name, email, password string) (*AuthResponse,
 		UserId: int(newUser.Id),
 		Email:  email,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour).Unix(),
+			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
 		},
 	}
 
