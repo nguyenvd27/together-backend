@@ -12,11 +12,15 @@ type EventUseCase interface {
 	GetEventsUsecase(page, size int) ([]EventsCreatedByUser, int64, error)
 	GetEventDetailUsecase(eventId int) (*EventsCreatedByUser, error)
 	DeleteEventUsecase(eventId, userId int) (string, error)
+	UpdateEventUsecase(userId int, reqBody *ReqBodyEditEvent, imageUrl []string) (*models.Event, error)
+	JoinEventUsecase(userId, eventId int) (*EventsCreatedByUser, string, error)
 }
 
 type eventUsecase struct {
-	eventRepo repositories.EventRepo
-	userRepo  repositories.UserRepo
+	eventRepo     repositories.EventRepo
+	userRepo      repositories.UserRepo
+	imageRepo     repositories.ImageRepo
+	userEventRepo repositories.UserEventRepo
 }
 
 type ReqBodyEvent struct {
@@ -34,10 +38,23 @@ type EventsCreatedByUser struct {
 	CreatedByUser models.User  `json:"created_by_user"`
 }
 
-func NewEventUsecase(eventRepo repositories.EventRepo, userRepo repositories.UserRepo) EventUseCase {
+type ReqBodyEditEvent struct {
+	Id             uint64
+	Title          string
+	Content        string
+	CreatedBy      uint64
+	StartTime      time.Time
+	EndTime        time.Time
+	Location       int
+	DetailLocation string
+}
+
+func NewEventUsecase(eventRepo repositories.EventRepo, userRepo repositories.UserRepo, imageRepo repositories.ImageRepo, userEventRepo repositories.UserEventRepo) EventUseCase {
 	return &eventUsecase{
-		eventRepo: eventRepo,
-		userRepo:  userRepo,
+		eventRepo:     eventRepo,
+		userRepo:      userRepo,
+		imageRepo:     imageRepo,
+		userEventRepo: userEventRepo,
 	}
 }
 
@@ -129,4 +146,72 @@ func (uc *eventUsecase) DeleteEventUsecase(eventId, userId int) (string, error) 
 	}
 
 	return mess, nil
+}
+
+func (uc *eventUsecase) UpdateEventUsecase(userId int, reqBody *ReqBodyEditEvent, imageUrl []string) (*models.Event, error) {
+	if reqBody.Title == "" {
+		return nil, fmt.Errorf("title cannot be empty")
+	}
+	if reqBody.Content == "" {
+		return nil, fmt.Errorf("content cannot be empty")
+	}
+	if reqBody.CreatedBy == uint64(0) {
+		return nil, fmt.Errorf("created_by cannot be empty")
+	}
+	event, err := uc.eventRepo.GetEventByEventIdAndCreatedBy(int(reqBody.Id), userId)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedEvent, err := uc.eventRepo.UpdateEvent(event, reqBody.Title, reqBody.Content, imageUrl, reqBody.StartTime, reqBody.EndTime, reqBody.Location, reqBody.DetailLocation)
+	if err != nil {
+		return nil, err
+	}
+	return updatedEvent, nil
+}
+
+func (uc *eventUsecase) JoinEventUsecase(userId, eventId int) (*EventsCreatedByUser, string, error) {
+
+	var (
+		event models.Event
+		mess  string
+	)
+
+	userEventGet, err := uc.userEventRepo.GetUserFromEvent(userId, eventId)
+	if err != nil && err.Error() != "record not found" {
+		return nil, "", err
+	}
+
+	if userEventGet != nil {
+		userEventRemove, err := uc.userEventRepo.RemoveUserFromEvent(userId, eventId)
+		if err != nil {
+			return nil, "", err
+		}
+		event, err = uc.eventRepo.GetEventDetail(int(userEventRemove.EventId))
+		if err != nil {
+			return nil, "", err
+		}
+		mess = "removed from the event successfully"
+	} else {
+		userEventAdd, err := uc.userEventRepo.AddUserToEvent(userId, eventId)
+		if err != nil {
+			return nil, "", err
+		}
+		event, err = uc.eventRepo.GetEventDetail(int(userEventAdd.EventId))
+		if err != nil {
+			return nil, "", err
+		}
+		mess = "joined the event successfully"
+	}
+
+	createdByUser, err := uc.userRepo.GetUserById(int64(event.CreatedBy))
+	if err != nil {
+		return nil, "", err
+	}
+
+	eventsCreatedByUser := EventsCreatedByUser{
+		EventDetail:   event,
+		CreatedByUser: createdByUser,
+	}
+	return &eventsCreatedByUser, mess, nil
 }
