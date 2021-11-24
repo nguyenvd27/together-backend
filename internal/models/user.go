@@ -14,6 +14,7 @@ type User struct {
 	Avatar    string         `json:"avatar"`
 	Address   int            `json:"address"`
 	Events    []Event        `json:"events" gorm:"many2many:user_events;"`
+	Comments  []Comment      `json:"comments" gorm:"foreignKey:UserId"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
