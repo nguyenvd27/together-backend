@@ -1,0 +1,59 @@
+# github.com/cloudinary/cloudinary-go v1.3.0
+## explicit; go 1.15
+github.com/cloudinary/cloudinary-go
+github.com/cloudinary/cloudinary-go/api
+github.com/cloudinary/cloudinary-go/api/admin
+github.com/cloudinary/cloudinary-go/api/admin/metadata
+github.com/cloudinary/cloudinary-go/api/admin/search
+github.com/cloudinary/cloudinary-go/api/uploader
+github.com/cloudinary/cloudinary-go/asset
+github.com/cloudinary/cloudinary-go/config
+github.com/cloudinary/cloudinary-go/internal/signature
+github.com/cloudinary/cloudinary-go/logger
+github.com/cloudinary/cloudinary-go/transformation
+# github.com/creasty/defaults v1.5.1
+## explicit; go 1.13
+github.com/creasty/defaults
+# github.com/dgrijalva/jwt-go v3.2.0+incompatible
+## explicit
+github.com/dgrijalva/jwt-go
+# github.com/go-sql-driver/mysql v1.6.0
+## explicit; go 1.10
+github.com/go-sql-driver/mysql
+# github.com/google/uuid v1.2.0
+## explicit
+github.com/google/uuid
+# github.com/gorilla/mux v1.8.0
+## explicit; go 1.12
+github.com/gorilla/mux
+# github.com/gorilla/schema v1.2.0
+## explicit
+github.com/gorilla/schema
+# github.com/jinzhu/inflection v1.0.0
+## explicit
+github.com/jinzhu/inflection
+# github.com/jinzhu/now v1.1.2
+## explicit; go 1.12
+github.com/jinzhu/now
+# github.com/joho/godotenv v1.4.0
+## explicit; go 1.12
+github.com/joho/godotenv
+# github.com/rs/cors v1.8.0
+## explicit; go 1.13
+github.com/rs/cors
+# golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
+## explicit; go 1.17
+golang.org/x/crypto/bcrypt
+golang.org/x/crypto/blowfish
+# gorm.io/driver/mysql v1.1.3
+## explicit; go 1.14
+gorm.io/driver/mysql
+# gorm.io/gorm v1.22.2
+## explicit; go 1.14
+gorm.io/gorm
+gorm.io/gorm/callbacks
+gorm.io/gorm/clause
+gorm.io/gorm/logger
+gorm.io/gorm/migrator
+gorm.io/gorm/schema
+gorm.io/gorm/utils
