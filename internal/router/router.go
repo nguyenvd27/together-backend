@@ -28,5 +28,7 @@ func New() *mux.Router {
 	router.HandleFunc("/api/v1/events/{event_id}/comments", middleware.Auth(handlers.CreateComment)).Methods("POST")
 	router.HandleFunc("/api/v1/events/{event_id}/comments/{comment_id}", middleware.Auth(handlers.DeleteComment)).Methods("DELETE")
 
+	router.HandleFunc("/api/v1/users/{user_id}", middleware.Auth(handlers.GetUserDetail)).Methods("GET")
+
 	return router
 }
