@@ -10,12 +10,21 @@ import (
 )
 
 func ConnectDB() *gorm.DB {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatalf("Some error occured. Err: %s", err)
-		return &gorm.DB{}
+	skipLoadEvn := os.Getenv("SKIP_LOAD_ENV")
+	if skipLoadEvn == "" {
+		err := godotenv.Load(".env")
+		if err != nil {
+			log.Fatalf("Some error occured. Err: %s", err)
+			return &gorm.DB{}
+		}
 	}
-	dsn := os.Getenv("USER_NAME") + ":" + os.Getenv("PASSWORD") + "@" + os.Getenv("DATABASE_PATH") + os.Getenv("DATABASE_NAME") + "?charset=utf8mb4&parseTime=True&loc=Local"
+
+	userName := os.Getenv("USER_NAME")
+	password := os.Getenv("PASSWORD")
+	databasePath := os.Getenv("DATABASE_PATH")
+	databaseName := os.Getenv("DATABASE_NAME")
+
+	dsn := userName + ":" + password + "@" + databasePath + databaseName + "?charset=utf8mb4&parseTime=True&loc=Local"
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
