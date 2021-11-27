@@ -68,6 +68,13 @@ func (uc *eventUsecase) CreateEventUsecase(reqBody *ReqBodyEvent, imageUrl []str
 	if reqBody.CreatedBy == uint64(0) {
 		return nil, fmt.Errorf("created_by cannot be empty")
 	}
+	if reqBody.StartTime.After(reqBody.EndTime) {
+		return nil, fmt.Errorf("start time must be less than end time")
+	}
+	currentTime := time.Now()
+	if currentTime.After(reqBody.EndTime) {
+		return nil, fmt.Errorf("end time must be greater than current time")
+	}
 	newEvent, err := uc.eventRepo.CreateEvent(reqBody.Title, reqBody.Content, imageUrl, reqBody.CreatedBy, reqBody.StartTime, reqBody.EndTime, reqBody.Location, reqBody.DetailLocation)
 	if err != nil {
 		return nil, err
@@ -157,6 +164,9 @@ func (uc *eventUsecase) UpdateEventUsecase(userId int, reqBody *ReqBodyEditEvent
 	}
 	if reqBody.CreatedBy == uint64(0) {
 		return nil, fmt.Errorf("created_by cannot be empty")
+	}
+	if reqBody.StartTime.After(reqBody.EndTime) {
+		return nil, fmt.Errorf("start time must be less than end time")
 	}
 	event, err := uc.eventRepo.GetEventByEventIdAndCreatedBy(int(reqBody.Id), userId)
 	if err != nil {

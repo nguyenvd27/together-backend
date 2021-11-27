@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"math/rand"
+	"net/mail"
 	"strings"
 )
 
@@ -31,4 +32,9 @@ func RandomID(n int) string {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return string(b)
+}
+
+func ValidateEmail(email string) bool {
+	_, err := mail.ParseAddress(email)
+	return err == nil
 }
