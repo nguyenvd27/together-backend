@@ -123,10 +123,13 @@ func (eventDB *eventDB) UpdateEvent(event models.Event, title, content string, i
 		EventImages:    imageUrls(imageUrl),
 	}
 
-	err := eventDB.db.Model(&event.EventImages).Delete(event.EventImages).Error
-	if err != nil {
-		return nil, err
+	if len(event.EventImages) > 0 {
+		err := eventDB.db.Model(&event.EventImages).Delete(event.EventImages).Error
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	if err := eventDB.db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&editEvent).Error; err != nil {
 		return nil, err
 	}

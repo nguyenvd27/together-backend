@@ -26,7 +26,7 @@ func initRouter(port string) {
 }
 
 func main() {
-	fmt.Println("Together Backend App.....")
+	fmt.Println("Together Backend App...")
 
 	skipLoadEvn := os.Getenv("SKIP_LOAD_ENV")
 	if skipLoadEvn == "" {

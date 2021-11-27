@@ -6,6 +6,7 @@ import (
 	"time"
 	"together-backend/internal/models"
 	"together-backend/internal/repositories"
+	"together-backend/pkg"
 
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
@@ -13,7 +14,7 @@ import (
 
 type AccountUseCase interface {
 	Login(email, password string) (*AuthResponse, error)
-	Register(name, email, password string) (*AuthResponse, error)
+	Register(name, email, password, passwordConfirm string) (*AuthResponse, error)
 }
 
 type accountUsecase struct {
@@ -38,6 +39,13 @@ func NewAccountUsecase(accountRepo repositories.UserRepo) AccountUseCase {
 }
 
 func (uc *accountUsecase) Login(email, password string) (*AuthResponse, error) {
+	if !pkg.ValidateEmail(email) {
+		return nil, fmt.Errorf("email is not valid")
+	}
+	if len(password) == 0 {
+		return nil, fmt.Errorf("password is empty")
+	}
+
 	user, err := uc.accountRepo.GetUserByEmail(email)
 	if err != nil {
 		return nil, err
@@ -70,7 +78,20 @@ func (uc *accountUsecase) Login(email, password string) (*AuthResponse, error) {
 	}, nil
 }
 
-func (uc *accountUsecase) Register(name, email, password string) (*AuthResponse, error) {
+func (uc *accountUsecase) Register(name, email, password, passwordConfirm string) (*AuthResponse, error) {
+	if name == "" {
+		return nil, fmt.Errorf("name is empty")
+	}
+	if !pkg.ValidateEmail(email) {
+		return nil, fmt.Errorf("email is not valid")
+	}
+	if len(password) < 8 {
+		return nil, fmt.Errorf("password must be at least 8 characters")
+	}
+	if password != passwordConfirm {
+		return nil, fmt.Errorf("password and confirm password does not match")
+	}
+
 	user, err := uc.accountRepo.GetUserByEmail(email)
 	if err != nil && err.Error() != "record not found" {
 		return nil, err

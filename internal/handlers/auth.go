@@ -22,9 +22,10 @@ type ReqBodyLogin struct {
 }
 
 type ReqBodyRegister struct {
-	Name     string
-	Email    string
-	Password string
+	Name            string
+	Email           string
+	Password        string
+	PasswordConfirm string `json:"password_confirm"`
 }
 
 func Test(w http.ResponseWriter, r *http.Request) {
@@ -88,11 +89,11 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("reqBody: ", reqBody)
 
-	registerResponse, err := accountUseCase.Register(reqBody.Name, reqBody.Email, reqBody.Password)
+	registerResponse, err := accountUseCase.Register(reqBody.Name, reqBody.Email, reqBody.Password, reqBody.PasswordConfirm)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"message": "email already exists",
+			"message": err.Error(),
 		})
 		return
 	}
