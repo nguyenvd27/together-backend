@@ -11,10 +11,12 @@ import (
 	"github.com/cloudinary/cloudinary-go/api/uploader"
 )
 
-const MAX_UPLOAD_SIZE = 10485760 // 10Mb
+const MAX_UPLOAD_SIZE = 10485760       // 10Mb
+const MAX_UPLOAD_AVATAR_SIZE = 5242880 // 5Mb
 
 type UploadUseCase interface {
 	EventImageUpload(files []*multipart.FileHeader) ([]string, error)
+	UploadAvatar(file *multipart.FileHeader) (string, error)
 }
 
 type uploadUsecase struct {
@@ -30,7 +32,7 @@ func NewUploadUsecase(imageRepo repositories.ImageRepo) UploadUseCase {
 func (uc *uploadUsecase) EventImageUpload(files []*multipart.FileHeader) ([]string, error) {
 	for _, fileHeader := range files {
 		if fileHeader.Size > MAX_UPLOAD_SIZE {
-			return nil, fmt.Errorf("the uploaded file is too big. Please choose an file that's less than 1MB in size")
+			return nil, fmt.Errorf("the uploaded file is too big. Please choose an file that's less than 10MB in size")
 		}
 	}
 
@@ -77,4 +79,36 @@ func (uc *uploadUsecase) EventImageUpload(files []*multipart.FileHeader) ([]stri
 	}
 
 	return imagesSlice, nil
+}
+
+func (uc *uploadUsecase) UploadAvatar(file *multipart.FileHeader) (string, error) {
+	if file.Size > MAX_UPLOAD_AVATAR_SIZE {
+		return "", fmt.Errorf("the uploaded file is too big. Please choose an file that's less than 5MB in size")
+	}
+
+	var cld, err = cloudinary.New()
+	if err != nil {
+		return "", fmt.Errorf("failed to intialize Cloudinary")
+	}
+
+	var ctx = context.Background()
+	fileName := file.Filename
+
+	fileOpen, err := file.Open()
+	if err != nil {
+		return "", fmt.Errorf("failed to open file")
+	}
+	defer fileOpen.Close()
+
+	uploadResult, err := cld.Upload.Upload(
+		ctx,
+		fileOpen,
+		uploader.UploadParams{
+			PublicID: "avatars/" + fileName + "_" + pkg.RandomID(6),
+		})
+	if err != nil {
+		return "", fmt.Errorf("failed to upload file")
+	}
+
+	return uploadResult.SecureURL, nil
 }

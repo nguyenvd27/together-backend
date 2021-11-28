@@ -64,3 +64,18 @@ func ParseRequestUpdateEvent(multipartFrom *multipart.Form) (*usecases.ReqBodyEd
 	reqBody.DetailLocation = multipartFrom.Value["detail_location"][0]
 	return &reqBody, nil
 }
+
+func ParseRequestUpdateProfile(multipartFrom *multipart.Form) (*usecases.ReqBodyUpdateProfile, error) {
+	var (
+		reqBody usecases.ReqBodyUpdateProfile
+		err     error
+	)
+	reqBody.Name = multipartFrom.Value["name"][0]
+
+	reqBody.Address, err = strconv.Atoi(multipartFrom.Value["address"][0])
+	if err != nil {
+		return nil, err
+	}
+
+	return &reqBody, nil
+}
