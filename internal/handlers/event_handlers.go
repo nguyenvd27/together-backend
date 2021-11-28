@@ -68,8 +68,10 @@ func CreateEvent(w http.ResponseWriter, r *http.Request) {
 func GetEvents(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var (
-		err  error
-		page int = 1
+		err    error
+		page   int = 1
+		userId int
+		search string
 	)
 	queries := r.URL.Query()
 	if len(queries["page"]) > 0 {
@@ -82,8 +84,21 @@ func GetEvents(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	if len(queries["search"]) > 0 {
+		search = queries["search"][0]
+	}
+	if len(queries["user_id"]) > 0 {
+		userId, err = strconv.Atoi(queries["user_id"][0])
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{
+				"message": "failed to parse query page",
+			})
+			return
+		}
+	}
 
-	events, total, err := eventUsecase.GetEventsUsecase(page, SIZE_PER_PAGE)
+	events, total, err := eventUsecase.GetEventsUsecase(page, SIZE_PER_PAGE, userId, search)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{
