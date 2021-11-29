@@ -9,7 +9,7 @@ import (
 
 type EventUseCase interface {
 	CreateEventUsecase(reqBody *ReqBodyEvent, imageUrl []string) (*models.Event, error)
-	GetEventsUsecase(page, size, userId int, search string) ([]EventsCreatedByUser, int64, error)
+	GetEventsUsecase(page, size, userId int, search, qType string) ([]EventsCreatedByUser, int64, error)
 	GetEventDetailUsecase(eventId int) (*EventsCreatedByUser, error)
 	DeleteEventUsecase(eventId, userId int) (string, error)
 	UpdateEventUsecase(userId int, reqBody *ReqBodyEditEvent, imageUrl []string) (*models.Event, error)
@@ -82,15 +82,15 @@ func (uc *eventUsecase) CreateEventUsecase(reqBody *ReqBodyEvent, imageUrl []str
 	return newEvent, nil
 }
 
-func (uc *eventUsecase) GetEventsUsecase(page, size, userId int, search string) ([]EventsCreatedByUser, int64, error) {
+func (uc *eventUsecase) GetEventsUsecase(page, size, userId int, search, qType string) ([]EventsCreatedByUser, int64, error) {
 	var eventsCreatedByUsers []EventsCreatedByUser
 
-	total, err := uc.eventRepo.CountEvents(userId, search)
+	total, err := uc.eventRepo.CountEvents(userId, search, qType)
 	if err != nil {
 		return nil, int64(0), err
 	}
 
-	events, err := uc.eventRepo.GetEvents(page, size, userId, search)
+	events, err := uc.eventRepo.GetEvents(page, size, userId, search, qType)
 	if err != nil {
 		return nil, int64(0), err
 	}

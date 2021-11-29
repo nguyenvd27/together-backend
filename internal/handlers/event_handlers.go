@@ -72,6 +72,7 @@ func GetEvents(w http.ResponseWriter, r *http.Request) {
 		page   int = 1
 		userId int
 		search string
+		qType  string
 	)
 	queries := r.URL.Query()
 	if len(queries["page"]) > 0 {
@@ -97,8 +98,11 @@ func GetEvents(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	if len(queries["type"]) > 0 {
+		qType = queries["type"][0]
+	}
 
-	events, total, err := eventUsecase.GetEventsUsecase(page, SIZE_PER_PAGE, userId, search)
+	events, total, err := eventUsecase.GetEventsUsecase(page, SIZE_PER_PAGE, userId, search, qType)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{
