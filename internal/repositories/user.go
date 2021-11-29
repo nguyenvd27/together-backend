@@ -11,6 +11,9 @@ type UserRepo interface {
 	CreateUser(name, email string, password []byte) (models.User, error)
 	GetUserById(id int64) (models.User, error)
 	GetUserDetail(id int) (*models.User, error)
+	UpdateProfile(user *models.User, name string, address int) (*models.User, error)
+	UpdateProfileWithAvatar(user *models.User, name string, address int, avatarUrl string) (*models.User, error)
+	ChangePassword(user *models.User, hashPassword []byte) (*models.User, error)
 }
 
 type userDB struct {
@@ -57,4 +60,31 @@ func (userDB *userDB) GetUserDetail(id int) (*models.User, error) {
 	}
 
 	return &user, err
+}
+
+func (userDB *userDB) UpdateProfile(user *models.User, name string, address int) (*models.User, error) {
+	err := userDB.db.Model(user).Updates(map[string]interface{}{"name": name, "address": address}).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return user, err
+}
+
+func (userDB *userDB) UpdateProfileWithAvatar(user *models.User, name string, address int, avatarUrl string) (*models.User, error) {
+	err := userDB.db.Model(user).Updates(map[string]interface{}{"name": name, "address": address, "avatar": avatarUrl}).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return user, err
+}
+
+func (userDB *userDB) ChangePassword(user *models.User, hashPassword []byte) (*models.User, error) {
+	err := userDB.db.Model(user).Updates(map[string]interface{}{"password": hashPassword}).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return user, err
 }
