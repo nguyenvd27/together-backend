@@ -9,8 +9,8 @@ import (
 
 type EventRepo interface {
 	CreateEvent(title, content string, imageUrl []string, createdBy uint64, startTime, endTime time.Time, location int, detailLocation string) (*models.Event, error)
-	GetEvents(page, size, userId int, search string) ([]models.Event, error)
-	CountEvents(userId int, search string) (int64, error)
+	GetEvents(page, size, userId int, search, qType string) ([]models.Event, error)
+	CountEvents(userId int, search, qType string) (int64, error)
 	GetEventDetail(eventId int) (models.Event, error)
 	GetEventByEventIdAndCreatedBy(eventId, createdBy int) (models.Event, error)
 	DeleteEvent(event models.Event) (string, error)
@@ -54,13 +54,19 @@ func (eventDB *eventDB) CreateEvent(title, content string, imageUrl []string, cr
 	return &event, nil
 }
 
-func (eventDB *eventDB) GetEvents(page, size, userId int, search string) ([]models.Event, error) {
+func (eventDB *eventDB) GetEvents(page, size, userId int, search, qType string) ([]models.Event, error) {
 	var (
 		events   []models.Event
 		err      error
 		eventIds []int
 	)
-	if userId != 0 {
+	if userId != 0 && qType == "created" {
+		err = eventDB.db.Preload("Users").Preload("EventImages").
+			Where("created_by = ?", userId).
+			Limit(size).Offset((page - 1) * size).
+			Order("created_at desc").
+			Find(&events).Error
+	} else if userId != 0 {
 		eventDB.db.Table("user_events").Select("event_id").Where("user_id", userId).Scan(&eventIds)
 		err = eventDB.db.Preload("Users").Preload("EventImages").
 			Where("id IN ?", eventIds).
@@ -86,13 +92,19 @@ func (eventDB *eventDB) GetEvents(page, size, userId int, search string) ([]mode
 	return events, nil
 }
 
-func (eventDB *eventDB) CountEvents(userId int, search string) (int64, error) {
+func (eventDB *eventDB) CountEvents(userId int, search, qType string) (int64, error) {
 	var (
 		err    error
 		total  int64
 		events models.Event
 	)
-	if userId != 0 {
+	if userId != 0 && qType == "created" {
+		err = eventDB.db.Where("created_by = ?", userId).
+			Find(&events).Count(&total).Error
+		if err != nil {
+			return int64(0), err
+		}
+	} else if userId != 0 {
 		eventDB.db.Table("user_events").Select("event_id").Where("user_id", userId).Count(&total)
 	} else if search != "" {
 		err = eventDB.db.Where("title LIKE ?", "%"+search+"%").Or("content LIKE ?", "%"+search+"%").Or("detail_location LIKE ?", "%"+search+"%").
@@ -134,6 +146,11 @@ func (eventDB *eventDB) GetEventByEventIdAndCreatedBy(eventId, createdBy int) (m
 
 func (eventDB *eventDB) DeleteEvent(event models.Event) (string, error) {
 	err := eventDB.db.Delete(&event).Error
+	if err != nil {
+		return "", err
+	}
+	var userEvents models.UserEvent
+	err = eventDB.db.Where("event_id", event.Id).Delete(userEvents).Error
 	if err != nil {
 		return "", err
 	}
