@@ -59,7 +59,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message": "login succefully",
+		"message": "login successfully",
 		"token":   loginResponse.Token,
 		"user":    loginResponse.User,
 	})
@@ -70,7 +70,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message": "logout succesfull",
+		"message": "logout successfully",
 	})
 }
 
@@ -100,7 +100,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message": "register succefully",
+		"message": "register successfully",
 		"token":   registerResponse.Token,
 		"user":    registerResponse.User,
 	})
