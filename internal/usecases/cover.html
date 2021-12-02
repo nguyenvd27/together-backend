@@ -1,0 +1,821 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>usecases: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">together-backend/internal/usecases/auth.go (0.0%)</option>
+				
+				<option value="file1">together-backend/internal/usecases/comment.go (0.0%)</option>
+				
+				<option value="file2">together-backend/internal/usecases/event.go (17.6%)</option>
+				
+				<option value="file3">together-backend/internal/usecases/upload_file.go (0.0%)</option>
+				
+				<option value="file4">together-backend/internal/usecases/user.go (0.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package usecases
+
+import (
+        "fmt"
+        "os"
+        "time"
+        "together-backend/internal/models"
+        "together-backend/internal/repositories"
+        "together-backend/pkg"
+
+        "github.com/dgrijalva/jwt-go"
+        "golang.org/x/crypto/bcrypt"
+)
+
+type AccountUseCase interface {
+        Login(email, password string) (*AuthResponse, error)
+        Register(name, email, password, passwordConfirm string) (*AuthResponse, error)
+}
+
+type accountUsecase struct {
+        accountRepo repositories.UserRepo
+}
+
+type AuthResponse struct {
+        Token string
+        User  models.User
+}
+
+type Claims struct {
+        UserId int    `json:"user_id"`
+        Email  string `json:"email"`
+        jwt.StandardClaims
+}
+
+func NewAccountUsecase(accountRepo repositories.UserRepo) AccountUseCase <span class="cov0" title="0">{
+        return &amp;accountUsecase{
+                accountRepo: accountRepo,
+        }
+}</span>
+
+func (uc *accountUsecase) Login(email, password string) (*AuthResponse, error) <span class="cov0" title="0">{
+        if !pkg.ValidateEmail(email) </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("email is not valid")
+        }</span>
+        <span class="cov0" title="0">if len(password) == 0 </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("password is empty")
+        }</span>
+
+        <span class="cov0" title="0">user, err := uc.accountRepo.GetUserByEmail(email)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">if err := bcrypt.CompareHashAndPassword(user.Password, []byte(password)); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        // Generate token
+        <span class="cov0" title="0">claims := &amp;Claims{
+                UserId: int(user.Id),
+                Email:  email,
+                StandardClaims: jwt.StandardClaims{
+                        ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
+                },
+        }
+
+        token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+        var jwtKey = []byte(os.Getenv("SECRET_KEY"))
+        tokenString, err := token.SignedString(jwtKey)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return &amp;AuthResponse{
+                Token: tokenString,
+                User:  user,
+        }, nil</span>
+}
+
+func (uc *accountUsecase) Register(name, email, password, passwordConfirm string) (*AuthResponse, error) <span class="cov0" title="0">{
+        if name == "" </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("name is empty")
+        }</span>
+        <span class="cov0" title="0">if !pkg.ValidateEmail(email) </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("email is not valid")
+        }</span>
+        <span class="cov0" title="0">if len(password) &lt; 8 </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("password must be at least 8 characters")
+        }</span>
+        <span class="cov0" title="0">if password != passwordConfirm </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("password and confirm password does not match")
+        }</span>
+
+        <span class="cov0" title="0">user, err := uc.accountRepo.GetUserByEmail(email)
+        if err != nil &amp;&amp; err.Error() != "record not found" </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">if user.Email == email </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("email already exists")
+        }</span>
+
+        <span class="cov0" title="0">hashPassword, _ := bcrypt.GenerateFromPassword([]byte(password), 14)
+
+        newUser, err := uc.accountRepo.CreateUser(name, email, hashPassword)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        // Generate token
+        <span class="cov0" title="0">claims := &amp;Claims{
+                UserId: int(newUser.Id),
+                Email:  email,
+                StandardClaims: jwt.StandardClaims{
+                        ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
+                },
+        }
+
+        token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+        var jwtKey = []byte(os.Getenv("SECRET_KEY"))
+        tokenString, err := token.SignedString(jwtKey)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return &amp;AuthResponse{
+                Token: tokenString,
+                User:  newUser,
+        }, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package usecases
+
+import (
+        "fmt"
+        "together-backend/internal/models"
+        "together-backend/internal/repositories"
+)
+
+type CommentCase interface {
+        GetCommentsByEventIdUsecase(eventId, page, size int) ([]models.Comment, int64, error)
+        CreateCommentUsecase(reqBody *ReqBodyComment, eventId, userId int) (*models.Comment, error)
+        DeleteCommentUsecase(commentId, eventId, userId int) (*models.Comment, error)
+}
+
+type commentUsecase struct {
+        commentRepo   repositories.CommentRepo
+        userEventRepo repositories.UserEventRepo
+}
+
+type ReqBodyComment struct {
+        Content string
+}
+
+func NewCommentUsecase(commentRepo repositories.CommentRepo, userEventRepo repositories.UserEventRepo) CommentCase <span class="cov0" title="0">{
+        return &amp;commentUsecase{
+                commentRepo:   commentRepo,
+                userEventRepo: userEventRepo,
+        }
+}</span>
+
+func (uc *commentUsecase) CreateCommentUsecase(reqBody *ReqBodyComment, eventId, userId int) (*models.Comment, error) <span class="cov0" title="0">{
+        if eventId &lt;= 0 </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("invalid event id")
+        }</span>
+        <span class="cov0" title="0">if userId &lt;= 0 </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("invalid user id")
+        }</span>
+        <span class="cov0" title="0">if reqBody.Content == "" </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("content of comment is empty")
+        }</span>
+
+        <span class="cov0" title="0">userEvent, err := uc.userEventRepo.GetUserFromEvent(userId, eventId)
+        if err != nil &amp;&amp; err.Error() != "record not found" </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">if userEvent == nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("you haven't joined in the event yet")
+        }</span>
+
+        <span class="cov0" title="0">newComment, err := uc.commentRepo.CreateComment(userId, eventId, reqBody.Content)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return newComment, nil</span>
+}
+
+func (uc *commentUsecase) GetCommentsByEventIdUsecase(eventId, page, size int) ([]models.Comment, int64, error) <span class="cov0" title="0">{
+
+        if eventId &lt;= 0 </span><span class="cov0" title="0">{
+                return nil, int64(0), fmt.Errorf("invalid event id")
+        }</span>
+
+        <span class="cov0" title="0">total, err := uc.commentRepo.CountCommentsByEventId(eventId)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, int64(0), err
+        }</span>
+
+        <span class="cov0" title="0">comments, err := uc.commentRepo.GetCommentsByEventId(eventId, size, page)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, int64(0), err
+        }</span>
+
+        <span class="cov0" title="0">return comments, total, nil</span>
+}
+
+func (uc *commentUsecase) DeleteCommentUsecase(commentId, eventId, userId int) (*models.Comment, error) <span class="cov0" title="0">{
+        if eventId &lt;= 0 </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("invalid event id")
+        }</span>
+        <span class="cov0" title="0">if userId &lt;= 0 </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("invalid user id")
+        }</span>
+        <span class="cov0" title="0">if commentId &lt;= 0 </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("invalid comment id")
+        }</span>
+
+        <span class="cov0" title="0">userEvent, err := uc.userEventRepo.GetUserFromEvent(userId, eventId)
+        if err != nil &amp;&amp; err.Error() != "record not found" </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">if userEvent == nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("you haven't joined in the event yet")
+        }</span>
+
+        <span class="cov0" title="0">comment, err := uc.commentRepo.GetComment(commentId, userId, eventId)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">deleteComment, err := uc.commentRepo.DeleteComment(comment)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return deleteComment, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package usecases
+
+import (
+        "fmt"
+        "time"
+        "together-backend/internal/models"
+        "together-backend/internal/repositories"
+)
+
+type EventUseCase interface {
+        CreateEventUsecase(reqBody *ReqBodyEvent, imageUrl []string) (*models.Event, error)
+        GetEventsUsecase(page, size, userId int, search, qType string) ([]EventsCreatedByUser, int64, error)
+        GetEventDetailUsecase(eventId int) (*EventsCreatedByUser, error)
+        DeleteEventUsecase(eventId, userId int) (string, error)
+        UpdateEventUsecase(userId int, reqBody *ReqBodyEditEvent, imageUrl []string) (*models.Event, error)
+        JoinEventUsecase(userId, eventId int) (*EventsCreatedByUser, string, error)
+}
+
+type eventUsecase struct {
+        eventRepo     repositories.EventRepo
+        userRepo      repositories.UserRepo
+        imageRepo     repositories.ImageRepo
+        userEventRepo repositories.UserEventRepo
+}
+
+type ReqBodyEvent struct {
+        Title          string
+        Content        string
+        CreatedBy      uint64
+        StartTime      time.Time
+        EndTime        time.Time
+        Location       int
+        DetailLocation string
+}
+
+type EventsCreatedByUser struct {
+        EventDetail   models.Event `json:"event_detail"`
+        CreatedByUser models.User  `json:"created_by_user"`
+}
+
+type ReqBodyEditEvent struct {
+        Id             uint64
+        Title          string
+        Content        string
+        CreatedBy      uint64
+        StartTime      time.Time
+        EndTime        time.Time
+        Location       int
+        DetailLocation string
+}
+
+func NewEventUsecase(eventRepo repositories.EventRepo, userRepo repositories.UserRepo, imageRepo repositories.ImageRepo, userEventRepo repositories.UserEventRepo) EventUseCase <span class="cov8" title="1">{
+        return &amp;eventUsecase{
+                eventRepo:     eventRepo,
+                userRepo:      userRepo,
+                imageRepo:     imageRepo,
+                userEventRepo: userEventRepo,
+        }
+}</span>
+
+func (uc *eventUsecase) CreateEventUsecase(reqBody *ReqBodyEvent, imageUrl []string) (*models.Event, error) <span class="cov8" title="1">{
+        if reqBody.Title == "" </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("title cannot be empty")
+        }</span>
+        <span class="cov8" title="1">if reqBody.Content == "" </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("content cannot be empty")
+        }</span>
+        <span class="cov8" title="1">if reqBody.CreatedBy == uint64(0) </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("created_by cannot be empty")
+        }</span>
+        <span class="cov8" title="1">if reqBody.StartTime.After(reqBody.EndTime) </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("start time must be less than end time")
+        }</span>
+        <span class="cov8" title="1">currentTime := time.Now()
+        if currentTime.After(reqBody.EndTime) </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("end time must be greater than current time")
+        }</span>
+        <span class="cov8" title="1">newEvent, err := uc.eventRepo.CreateEvent(reqBody.Title, reqBody.Content, imageUrl, reqBody.CreatedBy, reqBody.StartTime, reqBody.EndTime, reqBody.Location, reqBody.DetailLocation)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return newEvent, nil</span>
+}
+
+func (uc *eventUsecase) GetEventsUsecase(page, size, userId int, search, qType string) ([]EventsCreatedByUser, int64, error) <span class="cov0" title="0">{
+        var eventsCreatedByUsers []EventsCreatedByUser
+
+        total, err := uc.eventRepo.CountEvents(userId, search, qType)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, int64(0), err
+        }</span>
+
+        <span class="cov0" title="0">events, err := uc.eventRepo.GetEvents(page, size, userId, search, qType)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, int64(0), err
+        }</span>
+
+        <span class="cov0" title="0">for i := 0; i &lt; len(events); i++ </span><span class="cov0" title="0">{
+                createdByUser, err := uc.userRepo.GetUserById(int64(events[i].CreatedBy))
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, int64(0), fmt.Errorf("failed to get user who created the event")
+                }</span>
+                <span class="cov0" title="0">eventsCreatedByUser := EventsCreatedByUser{
+                        EventDetail:   events[i],
+                        CreatedByUser: createdByUser,
+                }
+                eventsCreatedByUsers = append(eventsCreatedByUsers, eventsCreatedByUser)</span>
+        }
+
+        <span class="cov0" title="0">return eventsCreatedByUsers, total, nil</span>
+}
+
+func (uc *eventUsecase) GetEventDetailUsecase(eventId int) (*EventsCreatedByUser, error) <span class="cov0" title="0">{
+        if eventId &lt;= 0 </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("invalid event id")
+        }</span>
+
+        <span class="cov0" title="0">event, err := uc.eventRepo.GetEventDetail(eventId)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">createdByUser, err := uc.userRepo.GetUserById(int64(event.CreatedBy))
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">eventsCreatedByUser := EventsCreatedByUser{
+                EventDetail:   event,
+                CreatedByUser: createdByUser,
+        }
+        return &amp;eventsCreatedByUser, nil</span>
+}
+
+func (uc *eventUsecase) DeleteEventUsecase(eventId, userId int) (string, error) <span class="cov0" title="0">{
+        if eventId &lt;= 0 </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("invalid event id")
+        }</span>
+        <span class="cov0" title="0">if userId &lt;= 0 </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("invalid user id")
+        }</span>
+
+        <span class="cov0" title="0">event, err := uc.eventRepo.GetEventByEventIdAndCreatedBy(eventId, userId)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+
+        <span class="cov0" title="0">fmt.Println("event will delete: ", event)
+
+        mess, err := uc.eventRepo.DeleteEvent(event)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+
+        <span class="cov0" title="0">return mess, nil</span>
+}
+
+func (uc *eventUsecase) UpdateEventUsecase(userId int, reqBody *ReqBodyEditEvent, imageUrl []string) (*models.Event, error) <span class="cov0" title="0">{
+        if reqBody.Title == "" </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("title cannot be empty")
+        }</span>
+        <span class="cov0" title="0">if reqBody.Content == "" </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("content cannot be empty")
+        }</span>
+        <span class="cov0" title="0">if reqBody.CreatedBy == uint64(0) </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("created_by cannot be empty")
+        }</span>
+        <span class="cov0" title="0">if reqBody.StartTime.After(reqBody.EndTime) </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("start time must be less than end time")
+        }</span>
+        <span class="cov0" title="0">event, err := uc.eventRepo.GetEventByEventIdAndCreatedBy(int(reqBody.Id), userId)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">updatedEvent, err := uc.eventRepo.UpdateEvent(event, reqBody.Title, reqBody.Content, imageUrl, reqBody.StartTime, reqBody.EndTime, reqBody.Location, reqBody.DetailLocation)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">return updatedEvent, nil</span>
+}
+
+func (uc *eventUsecase) JoinEventUsecase(userId, eventId int) (*EventsCreatedByUser, string, error) <span class="cov0" title="0">{
+
+        var (
+                event models.Event
+                mess  string
+        )
+
+        userEventGet, err := uc.userEventRepo.GetUserFromEvent(userId, eventId)
+        if err != nil &amp;&amp; err.Error() != "record not found" </span><span class="cov0" title="0">{
+                return nil, "", err
+        }</span>
+
+        <span class="cov0" title="0">if userEventGet != nil </span><span class="cov0" title="0">{
+                userEventRemove, err := uc.userEventRepo.RemoveUserFromEvent(userId, eventId)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, "", err
+                }</span>
+                <span class="cov0" title="0">event, err = uc.eventRepo.GetEventDetail(int(userEventRemove.EventId))
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, "", err
+                }</span>
+                <span class="cov0" title="0">mess = "removed from the event successfully"</span>
+        } else<span class="cov0" title="0"> {
+                userEventAdd, err := uc.userEventRepo.AddUserToEvent(userId, eventId)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, "", err
+                }</span>
+                <span class="cov0" title="0">event, err = uc.eventRepo.GetEventDetail(int(userEventAdd.EventId))
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, "", err
+                }</span>
+                <span class="cov0" title="0">mess = "joined the event successfully"</span>
+        }
+
+        <span class="cov0" title="0">createdByUser, err := uc.userRepo.GetUserById(int64(event.CreatedBy))
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, "", err
+        }</span>
+
+        <span class="cov0" title="0">eventsCreatedByUser := EventsCreatedByUser{
+                EventDetail:   event,
+                CreatedByUser: createdByUser,
+        }
+        return &amp;eventsCreatedByUser, mess, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package usecases
+
+import (
+        "context"
+        "fmt"
+        "mime/multipart"
+        "together-backend/internal/repositories"
+        "together-backend/pkg"
+
+        "github.com/cloudinary/cloudinary-go"
+        "github.com/cloudinary/cloudinary-go/api/uploader"
+)
+
+const MAX_UPLOAD_SIZE = 10485760       // 10Mb
+const MAX_UPLOAD_AVATAR_SIZE = 5242880 // 5Mb
+
+type UploadUseCase interface {
+        EventImageUpload(files []*multipart.FileHeader) ([]string, error)
+        UploadAvatar(file *multipart.FileHeader) (string, error)
+}
+
+type uploadUsecase struct {
+        imageRepo repositories.ImageRepo
+}
+
+func NewUploadUsecase(imageRepo repositories.ImageRepo) UploadUseCase <span class="cov0" title="0">{
+        return &amp;uploadUsecase{
+                imageRepo: imageRepo,
+        }
+}</span>
+
+func (uc *uploadUsecase) EventImageUpload(files []*multipart.FileHeader) ([]string, error) <span class="cov0" title="0">{
+        for _, fileHeader := range files </span><span class="cov0" title="0">{
+                if fileHeader.Size &gt; MAX_UPLOAD_SIZE </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("the uploaded file is too big. Please choose an file that's less than 10MB in size")
+                }</span>
+        }
+
+        <span class="cov0" title="0">var cld, err = cloudinary.New()
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to intialize Cloudinary")
+        }</span>
+
+        <span class="cov0" title="0">var ctx = context.Background()
+        var imagesSlice []string
+
+        if len(files) &gt; 5 </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("the number of files uploaded is too much. Upload up to 5 files")
+        }</span>
+        <span class="cov0" title="0">for i, _ := range files </span><span class="cov0" title="0">{
+                fileName := files[i].Filename
+                // fmt.Println("fileName: ", files[i])
+                // image, err := uc.imageRepo.GetImageByUrl(fileName)
+                // if err != nil &amp;&amp; err.Error() != "record not found" {
+                //         return nil, err
+                // }
+                // fmt.Println("file: ", image)
+                // if image.Id != 0 {
+                //         imagesSlice = append(imagesSlice, image.ImageUrl)
+                //         continue
+                // }
+
+                file, err := files[i].Open()
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("failed to open file")
+                }</span>
+                <span class="cov0" title="0">defer file.Close()
+
+                uploadResult, err := cld.Upload.Upload(
+                        ctx,
+                        file,
+                        uploader.UploadParams{
+                                PublicID: "events/" + fileName + "_" + pkg.RandomID(6),
+                        })
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("failed to upload file")
+                }</span>
+                <span class="cov0" title="0">imagesSlice = append(imagesSlice, uploadResult.SecureURL)</span>
+        }
+
+        <span class="cov0" title="0">return imagesSlice, nil</span>
+}
+
+func (uc *uploadUsecase) UploadAvatar(file *multipart.FileHeader) (string, error) <span class="cov0" title="0">{
+        if file.Size &gt; MAX_UPLOAD_AVATAR_SIZE </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("the uploaded file is too big. Please choose an file that's less than 5MB in size")
+        }</span>
+
+        <span class="cov0" title="0">var cld, err = cloudinary.New()
+        if err != nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("failed to intialize Cloudinary")
+        }</span>
+
+        <span class="cov0" title="0">var ctx = context.Background()
+        fileName := file.Filename
+
+        fileOpen, err := file.Open()
+        if err != nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("failed to open file")
+        }</span>
+        <span class="cov0" title="0">defer fileOpen.Close()
+
+        uploadResult, err := cld.Upload.Upload(
+                ctx,
+                fileOpen,
+                uploader.UploadParams{
+                        PublicID: "avatars/" + fileName + "_" + pkg.RandomID(6),
+                })
+        if err != nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("failed to upload file")
+        }</span>
+
+        <span class="cov0" title="0">return uploadResult.SecureURL, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package usecases
+
+import (
+        "fmt"
+        "together-backend/internal/models"
+        "together-backend/internal/repositories"
+
+        "golang.org/x/crypto/bcrypt"
+)
+
+type UserCase interface {
+        GetUserDetailUsecase(userId int) (*models.User, error)
+        UpdateProfilelUsecase(userId int, name string, address int, avatarUrl string) (*models.User, error)
+        ChangePasswordUsecase(userId int, oldPassword, newPassword, passwordConfirm string) (*models.User, error)
+}
+
+type userUsecase struct {
+        userRepo repositories.UserRepo
+}
+
+type ReqBodyUpdateProfile struct {
+        Name    string
+        Address int
+}
+
+func NewUserUsecase(userRepo repositories.UserRepo) UserCase <span class="cov0" title="0">{
+        return &amp;userUsecase{
+                userRepo: userRepo,
+        }
+}</span>
+
+func (uc *userUsecase) GetUserDetailUsecase(userId int) (*models.User, error) <span class="cov0" title="0">{
+
+        if userId &lt;= 0 </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("invalid user id")
+        }</span>
+
+        <span class="cov0" title="0">user, err := uc.userRepo.GetUserDetail(userId)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return user, nil</span>
+}
+
+func (uc *userUsecase) UpdateProfilelUsecase(userId int, name string, address int, avatarUrl string) (*models.User, error) <span class="cov0" title="0">{
+
+        var (
+                user        *models.User
+                updatedUser *models.User
+                err         error
+        )
+        if userId &lt;= 0 </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("invalid user id")
+        }</span>
+        <span class="cov0" title="0">if name == "" </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("name cannot be empty")
+        }</span>
+        <span class="cov0" title="0">if address &lt;= 0 </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("invalid address")
+        }</span>
+
+        <span class="cov0" title="0">user, err = uc.userRepo.GetUserDetail(userId)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">if avatarUrl == "" </span><span class="cov0" title="0">{
+                updatedUser, err = uc.userRepo.UpdateProfile(user, name, address)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+        } else<span class="cov0" title="0"> {
+                updatedUser, err = uc.userRepo.UpdateProfileWithAvatar(user, name, address, avatarUrl)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, err
+                }</span>
+        }
+
+        <span class="cov0" title="0">return updatedUser, nil</span>
+}
+
+func (uc *userUsecase) ChangePasswordUsecase(userId int, oldPassword, newPassword, passwordConfirm string) (*models.User, error) <span class="cov0" title="0">{
+
+        var (
+                user        *models.User
+                updatedUser *models.User
+                err         error
+        )
+        if userId &lt;= 0 </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("invalid user id")
+        }</span>
+        <span class="cov0" title="0">if len(newPassword) &lt; 8 </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("password must be at least 8 characters")
+        }</span>
+        <span class="cov0" title="0">if newPassword != passwordConfirm </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("password and confirm password does not match")
+        }</span>
+
+        <span class="cov0" title="0">user, err = uc.userRepo.GetUserDetail(userId)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">if err := bcrypt.CompareHashAndPassword(user.Password, []byte(oldPassword)); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("incorrect old password")
+        }</span>
+
+        <span class="cov0" title="0">hashPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), 14)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">updatedUser, err = uc.userRepo.ChangePassword(user, hashPassword)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return updatedUser, nil</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
