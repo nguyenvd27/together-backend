@@ -3,12 +3,14 @@ package database
 import (
 	"log"
 	"os"
+	"fmt"
 
 	"github.com/joho/godotenv"
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
+// Use PostgreSql
 func ConnectDB() *gorm.DB {
 	skipLoadEvn := os.Getenv("SKIP_LOAD_ENV")
 	if skipLoadEvn == "" {
@@ -21,12 +23,12 @@ func ConnectDB() *gorm.DB {
 
 	userName := os.Getenv("USER_NAME")
 	password := os.Getenv("PASSWORD")
-	databasePath := os.Getenv("DATABASE_PATH")
+	host := os.Getenv("DATABASE_HOST")
+	port := os.Getenv("DATABASE_PORT")
 	databaseName := os.Getenv("DATABASE_NAME")
 
-	dsn := userName + ":" + password + "@" + databasePath + databaseName + "?charset=utf8mb4&parseTime=True&loc=Local"
-
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s", host, userName, password, databaseName, port)
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
 		panic(err.Error())
